@@ -53,3 +53,30 @@ plugins=(git colorize cp extract history jump)
 
 source $ZSH/oh-my-zsh.sh
 
+alias lss='ls -lsa'
+alias rm='trash'
+alias aptu='sudo apt-get update && sudo apt-get upgrade'
+alias apti='sudo apt-get install '
+alias aptr='sudo apt-get remove '
+alias apta='sudo apt-get autoremove'
+alias aptp='sudo apt-get purge'
+alias dc='docker compose'
+
+prompt_segment() {
+  local bg fg
+  [[ -n $1 ]] && bg="%K{$1}" || bg="%k"
+  [[ -n $2 ]] && fg="%F{$2}" || fg="%f"
+  if [[ $CURRENT_BG != 'NONE' && $1 != $CURRENT_BG ]]; then
+    echo -n " %{$bg%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR%{$fg%} "
+  else
+    echo -n "%{$bg%}%{$fg%} "
+  fi
+  CURRENT_BG=$1
+  [[ -n $3 ]] && echo -n $3
+}
+
+# change hostname in PROMPT  so I know which shell I am in
+CUSTOMSERVERNAME={{VARIABLE_CUSTOMSERVERNAME}}
+                                                                                                                                                                                                                                       160,11        80%
+
+
