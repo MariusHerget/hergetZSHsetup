@@ -75,8 +75,41 @@ prompt_segment() {
   [[ -n $3 ]] && echo -n $3
 }
 
+# Display current virtual environment
+prompt_virtualenv() {
+  local env='';
+  local out_env='';
+  local out_vers='';
+  
+    # if "$CONDA_DEFAULT_ENV" variable exists,
+  # then you are using conda to manage python virtual env
+  if [[ -n "$CONDA_DEFAULT_ENV" ]]; then
+    env="$CONDA_DEFAULT_ENV"
+    out_env="conda"
+    out_vers="$(basename $env)"
+  elif [[ -n "$VIRTUAL_ENV" ]]; then
+    env="$VIRTUAL_ENV"
+    out_env="venv"
+    out_vers="$(basename $env)"
+  elif [[ -n $PYENV_SHELL ]]; then
+    local version
+    local pyv
+    pyv=$(python -V 2>&1 | grep -Po '(?<=Python )(.+)')
+    version=${(@)$(pyenv version)[1]}
+    if [[ $version != system ]]; then
+        out_env="pyenv"
+        out_vers="$version: $pyv"
+    fi
+  fi
+  local color="yellow"
+  local out='$fg[$color]%{\e[2m%}[$out_env] $out_vers %{\e[22m%}%{$reset_color%}'
+
+  if [[ -n $env ]]; then
+   color=yellow
+   print -Pn $out
+  fi
+}
+
+
 # change hostname in PROMPT  so I know which shell I am in
 CUSTOMSERVERNAME={{VARIABLE_CUSTOMSERVERNAME}}
-                                                                                                                                                                                                                                       160,11        80%
-
-

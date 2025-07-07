@@ -3,7 +3,7 @@ read -p "What should this machine be named? " prompt
 MACHINENAME=$prompt
 
 GUIINSTALL=" code spotify-client nextcloud-desktop nvtop ntfs-3g fonts-firacode ttf-mscorefonts-installer firefox chromium-browser"
-INSTALLADD=" build-essential make cmake git 7zip zip gcc g++ e2fsprogs speedtest"
+INSTALLADD=" build-essential make cmake git 7zip zip gcc g++ e2fsprogs speedtest btop"
 INSTALL=""
 # Check for root
 SUDO=''
@@ -152,6 +152,14 @@ if (echo "$prompt" | grep -Eq "^[nN](o)*$"); then
         $PYTHONVERS -m pip install --user virtualenv    
         $PYTHONVERS -m pip install virtualenv        
         cat ./pyenv.zshrc >> ~/.zshrc
+    fi
+    read -p "Do you want to install Conda? <Y/n> " prompt
+    if (echo "$prompt" | grep -Eq "^[nN](o)*$"); then
+        wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh 
+        sh ./Miniforge3-Linux-x86_64.sh -b -u
+        $SUDO sh ./Miniforge3-Linux-x86_64.sh -b -u
+        rm ./Miniforge3-Linux-x86_64.sh
+        cat ./conda.zshrc >> ~/.zshrc
     fi
 fi
 
