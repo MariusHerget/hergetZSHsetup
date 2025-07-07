@@ -67,6 +67,9 @@ fi
 cp .zshrc ~/.zshrc
 sed "s/{{VARIABLE_CUSTOMSERVERNAME}}/$MACHINENAME/g" 
 
+# Copy .tmux.conf
+cp .tmux.conf ~/.tmux.conf
+
 # Insert conf files into zshrc
 if [ -e $PWD/.aliases ]; then
 	echo "source $PWD/.aliases" >> ~/.zshrc
