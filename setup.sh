@@ -121,8 +121,8 @@ fi
 
 
 
-echo "Starting ZSH."
-zsh -c 'echo "Running in ZSH now."; exec zsh -i'
+# echo "Starting ZSH."
+# zsh -c 'echo "Running in ZSH now."; exec zsh -i'
 echo "SUDO PERM AVAIL"
 echo $SUDO_PERM_AVAIL
 
@@ -195,8 +195,8 @@ fi
 
 cat ./prompt.zshrc >> ~/.zshrc
 
-echo "Starting ZSH."
-zsh -c 'echo "Running in ZSH now."; exec zsh -i'
+# echo "Starting ZSH."
+# zsh -c 'echo "Running in ZSH now."; exec zsh -i'
 
 # GUI INSTALL
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
