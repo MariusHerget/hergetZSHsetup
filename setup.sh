@@ -66,18 +66,18 @@ if ! [ -d ~/.oh-my-zsh ]; then
     git clone https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh
     cp ~/.zshrc ~/.zshrc.orig 2> /dev/null
 else 
-    print "Oh My Zsh already downloaded."
+    echo "Oh My Zsh already downloaded."
 fi
 
 # Copy xxf theme
 if ! [ -f ~/.oh-my-zsh/themes/xxf.zsh-theme ]; then
     cp ./xxf.zsh-theme ~/.oh-my-zsh/themes/xxf.zsh-theme
 else 
-    print "XXF Theme already downloaded."
+    echo "XXF Theme already downloaded."
 fi
 
 # Copy .zshrc
-print "Copy .zshrc and .tmux.conf."
+echo "Copy .zshrc and .tmux.conf."
 cp .zshrc ~/.zshrc
 sed "s/{{VARIABLE_CUSTOMSERVERNAME}}/$MACHINENAME/g" 
 
@@ -105,7 +105,7 @@ done
 
 # insert Profile path in zprofile
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
-    print "Insert Profile path in zprofile"
+    echo "Insert Profile path in zprofile"
     echo "PATH=$(echo $PATH)" | $SUDO tee -a /etc/zsh/zprofile
     echo "export PATH" | $SUDO tee -a /etc/zsh/zprofile
 fi
