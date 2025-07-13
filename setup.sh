@@ -90,6 +90,7 @@ if [ -e $PWD/.aliases ]; then
     echo "Added .aliases as source in zshrc"
 fi
 
+echo "Checking for custom user conf."
 if [ -e $PWD/.user-conf ]; then
     tmp=$(mktemp)
     awk -v pwd=$PWD '!found && /source \$ZSH\/oh-my-zsh.sh/ { print "source "pwd"/.user-conf"; found=1 } 1' ~/.zshrc > $tmp
@@ -98,6 +99,7 @@ if [ -e $PWD/.user-conf ]; then
 fi
 
 # Insert already exisiting conf files into zsh
+echo "Checking for already exisiting conf file."
 for f in $(ls -a ~ | grep \.\*aliases\.\*); do
 	echo "source ~/$f" >> ~/.zshrc
     echo "Added $f as source in zshrc"
@@ -105,12 +107,15 @@ done
 
 # insert Profile path in zprofile
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
-    echo "Insert Profile path in zprofile"
+    echo "Insert profile path in zprofile"
     echo "PATH=$(echo $PATH)" | $SUDO tee -a /etc/zsh/zprofile
     echo "export PATH" | $SUDO tee -a /etc/zsh/zprofile
 fi
 
+echo "Starting ZSH."
 zsh
+echo "SUDO PERM AVAIL"
+echo $SUDO_PERM_AVAIL
 
 # Install addtional
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
@@ -181,6 +186,7 @@ fi
 
 cat ./prompt.zshrc >> ~/.zshrc
 
+echo "Starting ZSH."
 zsh
 
 # GUI INSTALL
