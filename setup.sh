@@ -85,6 +85,7 @@ sed "s/{{VARIABLE_CUSTOMSERVERNAME}}/$MACHINENAME/g"
 cp .tmux.conf ~/.tmux.conf
 
 # Insert conf files into zshrc
+echo "Checking for .asliases."
 if [ -e $PWD/.aliases ]; then
 	echo "source $PWD/.aliases" >> ~/.zshrc
     echo "Added .aliases as source in zshrc"
