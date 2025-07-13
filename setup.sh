@@ -79,7 +79,7 @@ fi
 # Copy .zshrc
 echo "Copy .zshrc and .tmux.conf."
 cp .zshrc ~/.zshrc
-sed "s/{{VARIABLE_CUSTOMSERVERNAME}}/$MACHINENAME/g" 
+sed -i "s|{{VARIABLE_CUSTOMSERVERNAME}}|$MACHINENAME|g" ~/.zshrc
 
 # Copy .tmux.conf
 cp .tmux.conf ~/.tmux.conf
