@@ -54,7 +54,6 @@ plugins=(git colorize cp extract history jump)
 source $ZSH/oh-my-zsh.sh
 
 alias lss='ls -lsa'
-alias rm='trash'
 alias aptu='sudo apt-get update && sudo apt-get upgrade'
 alias apti='sudo apt-get install '
 alias aptr='sudo apt-get remove '

@@ -113,6 +113,14 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     echo "export PATH" | $SUDO tee -a /etc/zsh/zprofile
 fi
 
+read -p "Do you want to use trash for rm? <Y/n> " prompt
+if (echo "$prompt" | grep -Eq "^[nN](o)*$"); then
+    echo "alias rm='trash'" >> ~/.zshrc
+fi
+
+
+
+
 echo "Starting ZSH."
 zsh
 echo "SUDO PERM AVAIL"
