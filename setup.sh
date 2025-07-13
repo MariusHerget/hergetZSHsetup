@@ -191,6 +191,9 @@ if (echo "$prompt" | grep -Eq "^[nN](o)*$"); then
     $SUDO sh ./Miniforge3-Linux-x86_64.sh -b -u
     rm ./Miniforge3-Linux-x86_64.sh
     cat ./conda.zshrc >> ~/.zshrc
+else
+    echo "# No Conda installed. Hence empty prompt command" >> ~/.zshrc
+    echo "prompt_virtualenv() {}" >> ~/.zshrc
 fi
 
 cat ./prompt.zshrc >> ~/.zshrc
@@ -233,3 +236,6 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     echo "GUI Disabled - GUI applications will not be installed"
     fi
 fi
+
+source ~/.zshrc
+zsh
