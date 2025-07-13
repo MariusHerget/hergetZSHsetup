@@ -114,7 +114,7 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
 fi
 
 read -p "Do you want to use trash for rm? <Y/n> " prompt
-if (echo "$prompt" | grep -Eq "^[nN](o)*$"); then
+if (echo "$prompt" | grep -Eq "^[yY](o)*$"); then
     echo "alias rm='trash'" >> ~/.zshrc
 fi
 
