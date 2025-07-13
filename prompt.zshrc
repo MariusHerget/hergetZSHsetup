@@ -8,7 +8,7 @@ ${hg_info} \
 ${git_info} \
 ${git_last_commit}
 %{$fg[red]%}%* \
-%{$fg[white]%}$(prompt_virtualenv)$(prompt_pyenv)\
+%{$fg[white]%}$(prompt_virtualenv)\
 %{$terminfo[bold]$fg[white]%} › %{$reset_color%}"
 
 if [[ "$USER" == "root" ]]; then
