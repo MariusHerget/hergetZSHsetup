@@ -1,246 +1,256 @@
 #!/bin/sh
-read -p "What should this machine be named? " prompt
-MACHINENAME=$prompt
 
-GUIINSTALL=" code spotify-client nextcloud-desktop nvtop ntfs-3g fonts-firacode ttf-mscorefonts-installer firefox chromium-browser"
-INSTALLADD=" build-essential make cmake git 7zip zip gcc g++ e2fsprogs speedtest btop"
-INSTALL=""
-# Check for root
-SUDO=''
-if [ `whoami` != root ]; then
-    read -p "Do you have sudo permissions on this machine? <y/N> " prompt
-    prompt=${prompt:-N}
-    if [[ "$prompt" =~ ^[Nn]$ ]]; then
-        echo "No installations can be performed."
-        SUDO_PERM_AVAIL=FALSE
-    else
-        SUDO_PERM_AVAIL=TRUE
-        SUDO='sudo'
-    fi
+# Ask for machine name
+printf "What should this machine be named? "
+read MACHINE_NAME
+
+# GUI and additional package lists
+GUI_INSTALL="code spotify-client nextcloud-desktop nvtop ntfs-3g fonts-firacode ttf-mscorefonts-installer firefox chromium-browser"
+CLI_ADD="build-essential make cmake git 7zip zip gcc g++ e2fsprogs speedtest btop"
+
+# Determine if we have sudo
+SUDO=""
+SUDO_PERM_AVAIL="FALSE"
+if [ "$(id -u)" -ne 0 ]; then
+    printf "Do you have sudo permissions on this machine? <y/N> "
+    read ANSWER
+    ANSWER=${ANSWER:-N}
+    case "$ANSWER" in
+      [Yy]) SUDO="sudo"; SUDO_PERM_AVAIL="TRUE" ;;
+      *) echo "No installations can be performed." ;;
+    esac
+else
+    SUDO_PERM_AVAIL="TRUE"
 fi
-# Install zsh and change standard shell
+
+# If sudo/root available, prepare core install list
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
-    if [ $(which zsh) ]; then
+    INSTALL_PKGS=""
+
+    # zsh
+    if ! command -v zsh >/dev/null 2>&1; then
+        INSTALL_PKGS="$INSTALL_PKGS zsh"
+    else
         echo "ZSH already installed"
-    else
-        INSTALL=$INSTALL" zsh"
     fi
 
-    if [ $(which curl) ]; then
+    # curl
+    if ! command -v curl >/dev/null 2>&1; then
+        INSTALL_PKGS="$INSTALL_PKGS curl"
+    else
         echo "CURL already installed"
-    else
-        INSTALL=$INSTALL" curl"
     fi
 
-    # Check if chsh is installed
-    if [ $(which chsh) ]; then
+    # chsh (util-linux-user)
+    if ! command -v chsh >/dev/null 2>&1; then
+        INSTALL_PKGS="$INSTALL_PKGS util-linux-user"
+    else
         echo "chsh already installed"
-    else
-        INSTALL=$INSTALL" util-linux-user"
     fi
 
-    INSTALL=$INSTALL" trash-cli apt-transport-https ca-certificates wget software-properties-common vim htop tmux"
+    # common tools
+    INSTALL_PKGS="$INSTALL_PKGS trash-cli apt-transport-https ca-certificates wget software-properties-common vim htop tmux"
 
-    if [ ! -z $INSTALL ]; then
-        if [ $(which apt) ]; then
-            $SUDO apt install $INSTALL
-        elif [ $(which brew) ]; then
-            $SUDO install $INSTALL
-        elif [ $(which yum) ]; then
-            $SUDO yum install $INSTALL
-        elif [ $(which zypper) ]; then
-            $SUDO zypper install $INSTALL
+    # Perform installation if any packages are pending
+    if [ -n "$INSTALL_PKGS" ]; then
+        if command -v apt >/dev/null 2>&1; then
+            $SUDO apt update
+            $SUDO apt install -y $INSTALL_PKGS
+        elif command -v brew >/dev/null 2>&1; then
+            $SUDO brew install $INSTALL_PKGS
+        elif command -v yum >/dev/null 2>&1; then
+            $SUDO yum install -y $INSTALL_PKGS
+        elif command -v zypper >/dev/null 2>&1; then
+            $SUDO zypper install -y $INSTALL_PKGS
         else
             echo "No known package manager installed"
-            exit
+            exit 1
         fi
     fi
 fi
 
-if ! $(echo $SHELL | grep -q "zsh"); then
-    $SUDO chsh $(whoami) -s $(which zsh)
+# Ensure default shell is zsh
+if ! echo "$SHELL" | grep -q 'zsh'; then
+    $SUDO chsh "$(whoami)" -s "$(command -v zsh)"
 fi
 echo "\$SHELL -> zsh"
 
 # Install Oh My Zsh
-if ! [ -d ~/.oh-my-zsh ]; then
-    git clone https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh
-    cp ~/.zshrc ~/.zshrc.orig 2> /dev/null
-else 
-    echo "Oh My Zsh already downloaded."
+if [ ! -d "${HOME}/.oh-my-zsh" ]; then
+    git clone https://github.com/ohmyzsh/ohmyzsh.git "${HOME}/.oh-my-zsh"
+    cp "${HOME}/.zshrc" "${HOME}/.zshrc.orig" 2>/dev/null
+else
+    echo "Oh My Zsh already present."
 fi
 
-# Copy xxf theme
-if ! [ -f ~/.oh-my-zsh/themes/xxf.zsh-theme ]; then
-    cp ./xxf.zsh-theme ~/.oh-my-zsh/themes/xxf.zsh-theme
-else 
-    echo "XXF Theme already downloaded."
+# Copy custom theme if missing
+if [ ! -f "${HOME}/.oh-my-zsh/themes/xxf.zsh-theme" ]; then
+    cp ./xxf.zsh-theme "${HOME}/.oh-my-zsh/themes/xxf.zsh-theme"
+else
+    echo "XXF theme already installed."
 fi
 
-# Copy .zshrc
-echo "Copy .zshrc and .tmux.conf."
-cp .zshrc ~/.zshrc
-sed -i "s|{{VARIABLE_CUSTOMSERVERNAME}}|$MACHINENAME|g" ~/.zshrc
+# Install user config files
+echo "Copying .zshrc and .tmux.conf"
+cp .zshrc "${HOME}/.zshrc"
+# substitute machine name placeholder
+sed -i "s|{{VARIABLE_CUSTOMSERVERNAME}}|$MACHINE_NAME|g" "${HOME}/.zshrc"
+cp .tmux.conf "${HOME}/.tmux.conf"
 
-# Copy .tmux.conf
-cp .tmux.conf ~/.tmux.conf
-
-# Insert conf files into zshrc
-echo "Checking for .asliases."
-if [ -e $PWD/.aliases ]; then
-	echo "source $PWD/.aliases" >> ~/.zshrc
-    echo "Added .aliases as source in zshrc"
+# Source additional config if present
+printf "Checking for .aliases… "
+if [ -f "./.aliases" ]; then
+    printf "\nsource %s/.aliases\n" "$PWD" >> "${HOME}/.zshrc"
+    echo "added"
+else
+    echo "none found"
 fi
 
-echo "Checking for custom user conf."
-if [ -e $PWD/.user-conf ]; then
-    tmp=$(mktemp)
-    awk -v pwd=$PWD '!found && /source \$ZSH\/oh-my-zsh.sh/ { print "source "pwd"/.user-conf"; found=1 } 1' ~/.zshrc > $tmp
-    mv $tmp ~/.zshrc
-    echo "Added .user-conf as source in zshrc"
+printf "Checking for .user-conf… "
+if [ -f "./.user-conf" ]; then
+    TMPFILE=$(mktemp)
+    awk -v pwd="$PWD" '
+      !done && /source \$ZSH\/oh-my-zsh.sh/ { print "source " pwd "/.user-conf"; done=1 }
+      { print }
+    ' "${HOME}/.zshrc" > "$TMPFILE" && mv "$TMPFILE" "${HOME}/.zshrc"
+    echo "added"
+else
+    echo "none found"
 fi
 
-# Insert already exisiting conf files into zsh
-echo "Checking for already exisiting conf file."
-for f in $(ls -a ~ | grep \.\*aliases\.\*); do
-	echo "source ~/$f" >> ~/.zshrc
-    echo "Added $f as source in zshrc"
+# Source any other alias files in home
+for f in $(ls -A "${HOME}" | grep '\.aliases'); do
+    printf "\nsource %s/%s\n" "${HOME}" "$f" >> "${HOME}/.zshrc"
+    echo "Added $f"
 done
 
-# insert Profile path in zprofile
+# If root/sudo, append system PATH to zprofile
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
-    echo "Insert profile path in zprofile"
-    echo "PATH=$(echo $PATH)" | $SUDO tee -a /etc/zsh/zprofile
-    echo "export PATH" | $SUDO tee -a /etc/zsh/zprofile
+    echo "Inserting PATH into /etc/zsh/zprofile"
+    printf 'PATH=%s\nexport PATH\n' "$PATH" | $SUDO tee -a /etc/zsh/zprofile >/dev/null
 fi
 
-read -p "Do you want to use trash for rm? <Y/n> " prompt
-prompt=${prompt:-Y}
-if [[ "$prompt" =~ ^[Yy]$ ]]; then
-    echo "alias rm='trash'" >> ~/.zshrc
-fi
+# Ask about trash alias
+printf "Do you want to use trash for rm? <Y/n> "
+read ANSWER
+ANSWER=${ANSWER:-Y}
+case "$ANSWER" in
+  [Yy]) printf "\nalias rm='trash'\n" >> "${HOME}/.zshrc" ;;
+  *) ;; 
+esac
 
-
-
-
-# echo "Starting ZSH."
-# zsh -c 'echo "Running in ZSH now."; exec zsh -i'
-echo "SUDO PERM AVAIL"
-echo $SUDO_PERM_AVAIL
-
-# Install addtional
+# Additional CLI tools
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
-    echo "\n#####"
-    read -p "Do you want to install additional CLI tools? <Y/n> \n($INSTALLADD) " prompt
-    prompt=${prompt:-Y}
-    if [[ "$prompt" =~ ^[Yy]$ ]]; then
-        if [ ! -z $INSTALLADD ]; then
-            if [ $(which apt) ]; then
-                # speedtest cli
-                curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash
-                # Update and install
+    printf "\nDo you want to install additional CLI tools? <Y/n>\n(%s) " "$CLI_ADD"
+    read ANSWER
+    ANSWER=${ANSWER:-Y}
+    if [ "${ANSWER%?}" = "Y" ] || [ "${ANSWER%?}" = "y" ]; then
+        if [ -n "$CLI_ADD" ]; then
+            if command -v apt >/dev/null 2>&1; then
+                curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | $SUDO bash
                 $SUDO apt update
-                $SUDO apt install $INSTALLADD
-            elif [ $(which brew) ]; then
-                $SUDO install $INSTALLADD
-            elif [ $(which yum) ]; then
-                # speedtest cli
-                curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.rpm.sh | sudo bash
-                # Update and install
-                $SUDO yum install $INSTALLADD
-            elif [ $(which zypper) ]; then
-                $SUDO zypper install $INSTALLADD
+                $SUDO apt install -y $CLI_ADD
+            elif command -v brew >/dev/null 2>&1; then
+                $SUDO brew install $CLI_ADD
+            elif command -v yum >/dev/null 2>&1; then
+                curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.rpm.sh | $SUDO bash
+                $SUDO yum install -y $CLI_ADD
+            elif command -v zypper >/dev/null 2>&1; then
+                $SUDO zypper install -y $CLI_ADD
             else
                 echo "No known package manager installed"
-                exit
+                exit 1
             fi
         fi
     fi
 
-    # Docker install
-    read -p "Do you want to install docker? <Y/n> " prompt
-    prompt=${prompt:-Y}
-    if [[ "$prompt" =~ ^[Yy]$ ]]; then
-        curl -fsSL https://get.docker.com | $SUDO bash
-        $SUDO groupadd docker
-        $SUDO usermod -aG docker $USER
+    # Docker installer
+    printf "Do you want to install docker? <Y/n> "
+    read ANSWER
+    ANSWER=${ANSWER:-Y}
+    case "$ANSWER" in
+      [Yy])
+        curl -fsSL https://get.docker.com | $SUDO sh
+        $SUDO groupadd docker 2>/dev/null
+        $SUDO usermod -aG docker "$USER"
         newgrp docker
-    fi
+        ;;
+      *) echo "Skipping Docker." ;;
+    esac
 fi
 
-
+# Python & Pyenv
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
-    # Python install
-    PYTHONVERS=python3
-    read -p "Do you want to install Python? <Y/n> " prompt
-    prompt=${prompt:-Y}
-    if [[ "$prompt" =~ ^[Yy]$ ]]; then
-        $SUDO apt install $PYTHONVERS
-        $PYTHONVERS -m pip install --upgrade pip
-        $PYTHONVERS --version
-        read -p "Do you want to install Pyenv? <Y/n> " prompt
-        prompt=${prompt:-Y}
-        if [[ "$prompt" =~ ^[Yy]$ ]]; then
-            curl -fsSL https://pyenv.run | bash
-            $PYTHONVERS -m pip install --user virtualenv    
-            $PYTHONVERS -m pip install virtualenv        
-            cat ./pyenv.zshrc >> ~/.zshrc
-        fi
-    fi
+    printf "Do you want to install Python? <Y/n> "
+    read ANSWER
+    ANSWER=${ANSWER:-Y}
+    case "$ANSWER" in
+      [Yy])
+        $SUDO apt install -y python3
+        python3 -m pip install --upgrade pip
+        python3 --version
+
+        printf "Do you want to install Pyenv? <Y/n> "
+        read ANSWER
+        ANSWER=${ANSWER:-Y}
+        case "$ANSWER" in
+          [Yy])
+            curl -fsSL https://pyenv.run | sh
+            python3 -m pip install --user virtualenv
+            python3 -m pip install virtualenv
+            cat ./pyenv.zshrc >> "${HOME}/.zshrc"
+            ;;
+        esac
+        ;;
+    esac
 fi
 
-# Conda install (even without python possible)
-read -p "Do you want to install Conda? <Y/n> " prompt
-prompt=${prompt:-Y}
-if [[ "$prompt" =~ ^[Yy]$ ]]; then
-    wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh 
-    sh ./Miniforge3-Linux-x86_64.sh -b -u
-    $SUDO sh ./Miniforge3-Linux-x86_64.sh -b -u
-    rm ./Miniforge3-Linux-x86_64.sh
-    cat ./conda.zshrc >> ~/.zshrc
+# Conda (independent of sudo)
+printf "Do you want to install Conda? <Y/n> "
+read ANSWER
+ANSWER=${ANSWER:-Y}
+case "$ANSWER" in
+  [Yy])
+    wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+    sh Miniforge3-Linux-x86_64.sh -b -u
+    rm Miniforge3-Linux-x86_64.sh
+    cat ./conda.zshrc >> "${HOME}/.zshrc"
     conda config --set auto_activate_base false
-fi
+    ;;
+esac
 
-cat ./prompt.zshrc >> ~/.zshrc
+# Append prompt config
+cat ./prompt.zshrc >> "${HOME}/.zshrc"
 
-# echo "Starting ZSH."
-# zsh -c 'echo "Running in ZSH now."; exec zsh -i'
-
-# GUI INSTALL
-if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
-    if [ x$DISPLAY != x ] ; then
-    echo "\n#####"
-    echo "GUI Enabled"
-    read -p "Would you like to install gui applications? <Y/n> \n($GUIINSTALL) " prompt
-    prompt=${prompt:-Y}
-    if [[ "$prompt" =~ ^[Yy]$ ]]; then
-        echo "Install gui applications!"
-        if [ ! -z $GUIINSTALL ]; then
-            if [ $(which apt) ]; then
-                $SUDO apt install apt-transport-https
-                # VS Code
-                echo "code code/add-microsoft-repo boolean true" | $SUDO debconf-set-selections
-                # Spotify 
-                curl -sS https://download.spotify.com/debian/pubkey_C85668DF69375001.gpg | $SUDO gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
-                echo "deb https://repository.spotify.com stable non-free" | $SUDO tee /etc/apt/sources.list.d/spotify.list
-                # nextcloud
-                $SUDO add-apt-repository ppa:nextcloud-devs/client
-                # nvtop
-                sudo add-apt-repository ppa:quentiumyt/nvtop
-                # Update and install
-                $SUDO apt update
-                $SUDO apt install $GUIINSTALL
-            else
-                echo "Only works with APT for now."
-                exit
-            fi
+# GUI apps if display available
+if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$DISPLAY" ]; then
+    printf "\nWould you like to install GUI applications? <Y/n>\n(%s) " "$GUI_INSTALL"
+    read ANSWER
+    ANSWER=${ANSWER:-Y}
+    case "$ANSWER" in
+      [Yy])
+        if command -v apt >/dev/null 2>&1; then
+            # add repos
+            $SUDO apt install -y apt-transport-https
+            printf "code code/add-microsoft-repo boolean true\n" | $SUDO debconf-set-selections
+            curl -sS https://download.spotify.com/debian/pubkey_C85668DF69375001.gpg \
+              | $SUDO gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
+            printf "deb https://repository.spotify.com stable non-free\n" \
+              | $SUDO tee /etc/apt/sources.list.d/spotify.list >/dev/null
+            $SUDO add-apt-repository -y ppa:nextcloud-devs/client
+            $SUDO add-apt-repository -y ppa:quentiumyt/nvtop
+            $SUDO apt update
+            $SUDO apt install -y $GUI_INSTALL
+        else
+            echo "Only APT-based GUI install is supported."
+            exit 1
         fi
-    else
-        echo "Okay we will NOT install gui applications!"
-    fi
-    else
-    echo "GUI Disabled - GUI applications will not be installed"
-    fi
+        ;;
+      *) echo "Skipping GUI applications." ;;
+    esac
+else
+    echo "GUI not available or no sudo—skipping GUI apps."
 fi
 
-zsh
+# Hand off to zsh
+exec zsh -i
