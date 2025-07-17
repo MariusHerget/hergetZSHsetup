@@ -215,7 +215,7 @@ case "$ANSWER" in
     sh Miniforge3-Linux-x86_64.sh -b -u
     rm Miniforge3-Linux-x86_64.sh
     cat ./conda.zshrc >> "${HOME}/.zshrc"
-    conda config --set auto_activate_base false
+    # conda config --set auto_activate_base false
     ;;
 esac
 
