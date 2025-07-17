@@ -9,12 +9,13 @@ INSTALL=""
 SUDO=''
 if [ `whoami` != root ]; then
     read -p "Do you have sudo permissions on this machine? <y/N> " prompt
-    if (echo "$prompt" | grep -Eq "^[yY](o)*$"); then
-        SUDO_PERM_AVAIL=TRUE
-        SUDO='sudo'
-    else
+    prompt=${prompt:-N}
+    if [[ "$prompt" =~ ^[Nn]$ ]]; then
         echo "No installations can be performed."
         SUDO_PERM_AVAIL=FALSE
+    else
+        SUDO_PERM_AVAIL=TRUE
+        SUDO='sudo'
     fi
 fi
 # Install zsh and change standard shell
@@ -114,7 +115,8 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
 fi
 
 read -p "Do you want to use trash for rm? <Y/n> " prompt
-if (echo "$prompt" | grep -Eq "^[yY](o)*$"); then
+prompt=${prompt:-Y}
+if [[ "$prompt" =~ ^[Yy]$ ]]; then
     echo "alias rm='trash'" >> ~/.zshrc
 fi
 
@@ -130,7 +132,8 @@ echo $SUDO_PERM_AVAIL
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     echo "\n#####"
     read -p "Do you want to install additional CLI tools? <Y/n> \n($INSTALLADD) " prompt
-    if (echo "$prompt" | grep -Eq "^[nN](o)*$"); then
+    prompt=${prompt:-Y}
+    if [[ "$prompt" =~ ^[Yy]$ ]]; then
         if [ ! -z $INSTALLADD ]; then
             if [ $(which apt) ]; then
                 # speedtest cli
@@ -156,7 +159,8 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
 
     # Docker install
     read -p "Do you want to install docker? <Y/n> " prompt
-    if (echo "$prompt" | grep -Eq "^[nN](o)*$"); then
+    prompt=${prompt:-Y}
+    if [[ "$prompt" =~ ^[Yy]$ ]]; then
         curl -fsSL https://get.docker.com | $SUDO bash
         $SUDO groupadd docker
         $SUDO usermod -aG docker $USER
@@ -169,12 +173,14 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     # Python install
     PYTHONVERS=python3
     read -p "Do you want to install Python? <Y/n> " prompt
-    if (echo "$prompt" | grep -Eq "^[nN](o)*$"); then
+    prompt=${prompt:-Y}
+    if [[ "$prompt" =~ ^[Yy]$ ]]; then
         $SUDO apt install $PYTHONVERS
         $PYTHONVERS -m pip install --upgrade pip
         $PYTHONVERS --version
         read -p "Do you want to install Pyenv? <Y/n> " prompt
-        if (echo "$prompt" | grep -Eq "^[nN](o)*$"); then
+        prompt=${prompt:-Y}
+        if [[ "$prompt" =~ ^[Yy]$ ]]; then
             curl -fsSL https://pyenv.run | bash
             $PYTHONVERS -m pip install --user virtualenv    
             $PYTHONVERS -m pip install virtualenv        
@@ -185,12 +191,14 @@ fi
 
 # Conda install (even without python possible)
 read -p "Do you want to install Conda? <Y/n> " prompt
-if (echo "$prompt" | grep -Eq "^[nN](o)*$"); then
+prompt=${prompt:-Y}
+if [[ "$prompt" =~ ^[Yy]$ ]]; then
     wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh 
     sh ./Miniforge3-Linux-x86_64.sh -b -u
     $SUDO sh ./Miniforge3-Linux-x86_64.sh -b -u
     rm ./Miniforge3-Linux-x86_64.sh
     cat ./conda.zshrc >> ~/.zshrc
+    conda config --set auto_activate_base false
 fi
 
 cat ./prompt.zshrc >> ~/.zshrc
@@ -204,9 +212,8 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     echo "\n#####"
     echo "GUI Enabled"
     read -p "Would you like to install gui applications? <Y/n> \n($GUIINSTALL) " prompt
-    if (echo "$prompt" | grep -Eq "^[nN](o)*$"); then
-        echo "Okay we will NOT install gui applications!"
-    else
+    prompt=${prompt:-Y}
+    if [[ "$prompt" =~ ^[Yy]$ ]]; then
         echo "Install gui applications!"
         if [ ! -z $GUIINSTALL ]; then
             if [ $(which apt) ]; then
@@ -228,6 +235,8 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
                 exit
             fi
         fi
+    else
+        echo "Okay we will NOT install gui applications!"
     fi
     else
     echo "GUI Disabled - GUI applications will not be installed"
