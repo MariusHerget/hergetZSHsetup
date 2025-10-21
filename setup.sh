@@ -7,6 +7,7 @@ read MACHINE_NAME
 # GUI and additional package lists
 GUI_INSTALL="code spotify-client nextcloud-desktop nvtop ntfs-3g fonts-firacode ttf-mscorefonts-installer firefox chromium-browser"
 CLI_ADD="build-essential make cmake git 7zip zip gcc g++ e2fsprogs speedtest"
+RUN_AFTER_DONE="printf 'Running additional setup stuff'"
 
 # Determine if we have sudo
 SUDO=""
@@ -205,17 +206,42 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     esac
 fi
 
+
 # Conda (independent of sudo)
-printf "Do you want to install Conda? <Y/n> "
-read ANSWER
-ANSWER=${ANSWER:-Y}
-case "$ANSWER" in
+printf "Do you want to install Conda (Miniforge3)? <Y/n> "
+read ANSWER_CONDA
+ANSWER_CONDA=${ANSWER_CONDA:-Y}
+
+case "$ANSWER_CONDA" in
   [Yy])
-    wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
-    sh Miniforge3-Linux-x86_64.sh -b -u
-    rm Miniforge3-Linux-x86_64.sh
-    cat ./conda.zshrc >> "${HOME}/.zshrc"
-    # conda config --set auto_activate_base false
+    printf "\tConda installation directory: [${HOME}/conda] "
+    read ANSWER_CONDA_DIR
+    ANSWER_CONDA_DIR=${ANSWER_CONDA_DIR:-"${HOME}/conda"}
+    mkdir -p "$ANSWER_CONDA_DIR"
+    printf "\tDownloading Miniforge installer (Miniforge3-$(uname)-$(uname -m).sh)...\n"
+    wget -q --show-progress -O Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+    bash Miniforge3.sh -b -u -p "$ANSWER_CONDA_DIR" 2>&1 | sed 's/^/\t  [Conda] /'
+    . "${HOME}/conda/etc/profile.d/conda.sh"
+    rm Miniforge3.sh
+
+    # Installation and cleanup done.
+    RUN_AFTER_DONE="$RUN_AFTER_DONE && conda init zsh 2>&1 | sed 's/^/\t  [Conda] /'"
+    RUN_AFTER_DONE="$RUN_AFTER_DONE && conda config --set auto_activate_base false"
+    RUN_AFTER_DONE="$RUN_AFTER_DONE && conda config --set changeps1 false"
+    
+    # Mamba Support
+    printf "\tWould you like to add Mamba support? <y/N> "
+    read ANSWER_MAMBA
+    ANSWER_MAMBA=${ANSWER_MAMBA:-N}
+    case "$ANSWER_MAMBA" in
+        [Yy])
+        echo "Mamba support will be activated." 2>&1 | sed 's/^/\t\t/'
+        RUN_AFTER_DONE="$RUN_AFTER_DONE && mamba shell init"
+        ;;
+        [Nn])
+        echo "Mamba support not activated. Run\n\t 'mamba shell init'\nto activate later." 2>&1 | sed 's/^/\t\t/'
+        ;;
+    esac
     ;;
 esac
 
@@ -253,4 +279,5 @@ else
 fi
 
 # Hand off to zsh
-exec zsh -i
+# printf '%s\n' "$RUN_AFTER_DONE"
+exec zsh -i -c "$RUN_AFTER_DONE"
