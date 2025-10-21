@@ -1,3 +1,4 @@
+precmd_update_prompt() {
 PROMPT="
 %{$fg[cyan]%}%n \
 %{$fg[white]%}at \
@@ -7,9 +8,8 @@ PROMPT="
 ${hg_info} \
 ${git_info} \
 ${git_last_commit}
-%{$fg[red]%}%* \
-%{$fg[white]%}$(prompt_virtualenv)\
-%{$terminfo[bold]$fg[white]%} › %{$reset_color%}"
+%{$fg[red]%}%* $(prompt_virtualenv)\
+%{$terminfo[bold]$fg[white]%}› %{$reset_color%}"
 
 if [[ "$USER" == "root" ]]; then
 PROMPT="
@@ -24,5 +24,5 @@ ${hg_info}\
 ${git_info}
 %{$terminfo[bold]$fg[red]%}$ %{$reset_color%}"
 fi
-
-     
+}
+precmd_functions+=( precmd_update_prompt )

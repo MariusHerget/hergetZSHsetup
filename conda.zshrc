@@ -20,21 +20,3 @@ else
 fi
 unset __conda_setup
 # <<< conda initialize <<<
-
-# ──────────────────────────────────────────────────────────────────────────────
-# 2️⃣ override conda() to add logging + rc-reload on activate/deactivate
-# ──────────────────────────────────────────────────────────────────────────────
-conda() {
-  cmd=$1; shift
-  case "$cmd" in
-    activate|deactivate)
-      # call the original activation routine…
-      __conda_activate "$cmd" "$@" \
-        && { source ~/.zshrc; }
-      ;;
-    *)
-      # everything else delegates to the original low-level conda
-      __conda_exe "$cmd" "$@"
-      ;;
-  esac
-}

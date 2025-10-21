@@ -80,7 +80,7 @@ prompt_virtualenv() {
   local out_env='';
   local out_vers='';
   
-    # if "$CONDA_DEFAULT_ENV" variable exists,
+  # if "$CONDA_DEFAULT_ENV" variable exists,
   # then you are using conda to manage python virtual env
   if [[ -n "$CONDA_DEFAULT_ENV" ]]; then
     env="$CONDA_DEFAULT_ENV"
@@ -101,13 +101,15 @@ prompt_virtualenv() {
     fi
   fi
   local color="yellow"
-  local out='$fg[$color]%{\e[2m%}[$out_env] $out_vers %{\e[22m%}%{$reset_color%}'
+  local out='$fg[$color]%{\e[2m%}[$out_env] $out_vers%{\e[22m%}%{$reset_color%} '
 
   if [[ -n $env ]]; then
    color=yellow
    print -Pn $out
   fi
 }
+
+precmd_functions+=( prompt_virtualenv )
 
 
 # change hostname in PROMPT  so I know which shell I am in
