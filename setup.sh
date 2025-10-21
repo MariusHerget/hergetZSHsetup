@@ -6,7 +6,7 @@ read MACHINE_NAME
 
 # GUI and additional package lists
 GUI_INSTALL="code spotify-client nextcloud-desktop nvtop ntfs-3g fonts-firacode ttf-mscorefonts-installer firefox chromium-browser"
-CLI_ADD="build-essential make cmake git 7zip zip gcc g++ e2fsprogs speedtest btop"
+CLI_ADD="build-essential make cmake git 7zip zip gcc g++ e2fsprogs speedtest"
 
 # Determine if we have sudo
 SUDO=""
@@ -49,7 +49,7 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     fi
 
     # common tools
-    INSTALL_PKGS="$INSTALL_PKGS trash-cli apt-transport-https ca-certificates wget software-properties-common vim htop tmux"
+    INSTALL_PKGS="$INSTALL_PKGS trash-cli apt-transport-https ca-certificates wget software-properties-common vim htop btop tmux"
 
     # Perform installation if any packages are pending
     if [ -n "$INSTALL_PKGS" ]; then
