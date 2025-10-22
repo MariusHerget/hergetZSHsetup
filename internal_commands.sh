@@ -12,7 +12,8 @@ _tabs(){ _t_n=${1:-1}; _t_pad=''; _t_i=0; while [ "$_t_i" -lt "$_t_n" ]; do _t_p
 echo_tab() { n=${1:-1}; shift; printf '%s%s\n' "$(_tabs "$n")" "$*"; }
 indent()   { n=${1:-1}; shift; "$@" 2>&1 | sed "s/^/$(_tabs "$n")/"; }
 indent_custom() { 
-  PREFIX_indent_custom=$1; n=${2:-0}; shift 2; 
+  PREFIX_indent_custom=$1; n=${2:-0}; 
+  [ $# -gt 1 ] && shift 2 || shift 1;
   "$@" 2>&1 | sed "s/^/$PREFIX_indent_custom $(_tabs "$n") /"; 
   echo "$PREFIX_indent_custom Done."; 
 }
@@ -142,4 +143,27 @@ s_rc_insert_before() {
   grep -qxF -- "$line" "$rc" 2>/dev/null && return 0
   tmp=$(mktemp) || return 1
   awk -v ins="$line" -v pat="$pattern" ' !done && $0 ~ pat { print ins; done=1 } { print } ' "$rc" > "$tmp" && mv "$tmp" "$rc"
+}
+
+ensure_path_in_zprofile() {
+  zprof="/etc/zsh/zprofile"
+  marker="# BEGIN CUSTOM PATH (managed by hergetZSHsetup)"
+  endmarker="# END CUSTOM PATH (managed by hergetZSHsetup)"
+
+  # already present -> nothing to do
+  if $SUDO grep -qF "$marker" "$zprof" 2>/dev/null; then
+    return 0
+  fi
+
+  # capture current PATH safely
+  current_path=$(printf '%s' "$PATH")
+
+  # append guarded block (created if file missing)
+  $SUDO tee -a "$zprof" >/dev/null <<EOF
+$marker
+# Injected by setup script on $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+PATH=$current_path
+export PATH
+$endmarker
+EOF
 }

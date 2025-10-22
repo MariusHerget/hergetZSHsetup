@@ -48,7 +48,7 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
             $SUDO apt update
             $SUDO apt install -y $INSTALL_PKGS
         elif command -v brew >/dev/null 2>&1; then
-            $SUDO brew install $INSTALL_PKGS
+            brew install $INSTALL_PKGS
         elif command -v yum >/dev/null 2>&1; then
             $SUDO yum install -y $INSTALL_PKGS
         elif command -v zypper >/dev/null 2>&1; then
@@ -79,14 +79,13 @@ s_backup_multiple_files $FILES_TO_BACKUP_REQUIRED
  s_echo "Installing OhMyZsh and XXF theme"
 if [ ! -d "${HOME}/.oh-my-zsh" ]; then
     git clone https://github.com/ohmyzsh/ohmyzsh.git "${HOME}/.oh-my-zsh"
-    # cp "${HOME}/.zshrc" "${HOME}/.zshrc.orig" 2>/dev/null
 else
     s_echo "OhMyZsh already present." 1
 fi
 
 # Copy custom theme if missing
 if [ ! -f "${HOME}/.oh-my-zsh/themes/xxf.zsh-theme" ]; then
-    cp ./xxf.zsh-theme "${HOME}/.oh-my-zsh/themes/xxf.zsh-theme"
+    cp "./xxf.zsh-theme" "${HOME}/.oh-my-zsh/themes/xxf.zsh-theme"
 else
     s_echo "XXF theme already installed." 1
 fi
@@ -97,8 +96,8 @@ fi
 # Install user config files
 s_echo "Configuring personalized ZSH."
 s_echo "Copying .zshrc and .tmux.conf" 1
-cp .zshrc "${HOME}/.zshrc"
-cp .tmux.conf "${HOME}/.tmux.conf"
+cp ".zshrc" "${HOME}/.zshrc"
+cp ".tmux.conf" "${HOME}/.tmux.conf"
 
 # substitute machine name placeholder
 sed -i "s|{{VARIABLE_CUSTOMSERVERNAME}}|$MACHINE_NAME|g" "${HOME}/.zshrc"
@@ -118,16 +117,17 @@ fi
 
 # Source any other alias files in home
 s_echo "Checking for .aliases in \$HOME" 1
-for f in $(ls -A "${HOME}" | grep '\.aliases'); do
+for f in "$HOME"/.aliases*; do
   [ -f "$f" ] || continue
-  s_rc_ensure_line "${HOME}/.zshrc" "source $f"
-  s_echo "Added '$(basename "$f")/" 2
+  s_rc_ensure_line "$HOME/.zshrc" "source $f"
+  s_echo "Added '$(basename "$f")'" 2
 done
 
 # If root/sudo, append system PATH to zprofile
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     s_echo "Inserting PATH into /etc/zsh/zprofile" 1
-    printf 'PATH=%s\nexport PATH\n' "$PATH" | $SUDO tee -a /etc/zsh/zprofile >/dev/null
+    # printf 'PATH=%s\nexport PATH\n' "$PATH" | $SUDO tee -a /etc/zsh/zprofile >/dev/null
+    ensure_path_in_zprofile
 fi
 
 # Ask about trash alias
@@ -148,7 +148,7 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$CLI_ADD" ]; then
             $SUDO apt update
             $SUDO apt install -y $CLI_ADD
         elif command -v brew >/dev/null 2>&1; then
-            $SUDO brew install $CLI_ADD
+            brew install $CLI_ADD
         elif command -v yum >/dev/null 2>&1; then
             curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.rpm.sh | $SUDO bash
             $SUDO yum install -y $CLI_ADD
@@ -168,9 +168,13 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$CLI_ADD" ]; then
         curl -L --progress-bar -o docker.sh "https://get.docker.com"
         indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 sh docker.sh
         rm docker.sh
-        indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 $SUDO groupadd docker 2>/dev/null
-        indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 $SUDO usermod -aG docker "$USER"
-        indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 newgrp docker
+        # indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 $SUDO groupadd docker 2>/dev/null
+        # indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 $SUDO usermod -aG docker "$USER"
+        # indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 newgrp docker
+        # Docker group handling
+        if getent group docker >/dev/null 2>&1; then :; else indent_custom "$INT_SETUP_PREFIX_DOCKER" 2  $SUDO groupadd docker; fi
+        $SUDO usermod -aG docker "$USER"
+        s_echo "Log out and back in to use docker without sudo." 2
         ;;
       *) s_echo "Skipping Docker." 2 ;;
     esac
@@ -211,7 +215,7 @@ case "$ANSWER_CONDA" in
     s_echo "Downloading Miniforge installer (Miniforge3-$(uname)-$(uname -m).sh)..." 1
     curl -L --progress-bar -o Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
     indent_custom "$INT_SETUP_PREFIX_CONDA" 2 bash Miniforge3.sh -b -u -p "$ANSWER_CONDA_DIR"
-    . "${HOME}/conda/etc/profile.d/conda.sh"
+    . "$ANSWER_CONDA_DIR/etc/profile.d/conda.sh"
     rm Miniforge3.sh
 
     # Installation and cleanup done.
@@ -257,12 +261,12 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$DISPLAY" ]; then
             s_error "Only APT-based GUI install is supported."
         fi
         ;;
-      *) s_echo "Skipping GUI applications." 1 ;;
+      *) s_echo "Skipping installing GUI apps." 1 ;;
     esac
 else
-    s_echo "GUI not available or no sudo. Skipping GUI apps." 0
+    s_echo "GUI not available or no sudo. Skipping installing GUI apps."
 fi
 
 # Hand off to zsh
 # printf '%s\n' "$RUN_AFTER_DONE"
-exec zsh -i -c "$RUN_AFTER_DONE"
+exec zsh -f -c "$RUN_AFTER_DONE"
