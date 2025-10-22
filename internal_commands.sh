@@ -1,9 +1,13 @@
 #!/bin/sh
-INT_SETUP_PREFIX="  [SETUP]"
-INT_SETUP_PREFIX_ERROR="  [ERROR]"
-INT_SETUP_PREFIX_CONDA="  [CONDA]"
+INT_SETUP_PREFIX="  [SETUP] "
+INT_SETUP_PREFIX_ERROR="  [ERROR] "
+INT_SETUP_PREFIX_CONDA="  [CONDA] "
 INT_SETUP_PREFIX_DOCKER="  [DOCKER]"
-INT_SETUP_PREFIX_PYENV="  [PYENV]"
+INT_SETUP_PREFIX_PYTHON="  [PYTHON]"
+INT_SETUP_PREFIX_PYENV="  [PYENV] "
+INT_SETUP_PREFIX_CLI="  [CLI]   "
+INT_SETUP_PREFIX_GUI="  [GUI]   "
+INT_SETUP_PREFIX_APT="  [APT]   "
 
 # build prefix of N tabs
 _tabs(){ _t_n=${1:-1}; _t_pad=''; _t_i=0; while [ "$_t_i" -lt "$_t_n" ]; do _t_pad="${_t_pad}\t"; _t_i=$((_t_i+1)); done; printf '%b' "$_t_pad"; }

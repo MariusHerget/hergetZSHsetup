@@ -39,15 +39,15 @@ fi
 # If sudo/root available, prepare core install list
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     # Required tools
-    INSTALL_PKGS="zsh curl util-linux-user trash-cli apt-transport-https ca-certificates wget software-properties-common vim htop btop tmux"
+    INSTALL_PKGS="zsh curl passwd trash-cli apt-transport-https ca-certificates wget software-properties-common vim htop btop tmux"
     s_echo "Installing required and recommended packages"
     s_echo "($INSTALL_PKGS)" 1
 
     # Perform installation if any packages are pending
     if [ -n "$INSTALL_PKGS" ]; then
         if command -v apt >/dev/null 2>&1; then
-            $SUDO apt update
-            $SUDO apt install -y $INSTALL_PKGS
+            indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt update
+            indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install -y $INSTALL_PKGS
         elif command -v brew >/dev/null 2>&1; then
             brew install $INSTALL_PKGS
         elif command -v yum >/dev/null 2>&1; then
@@ -141,14 +141,14 @@ esac
 
 # Additional CLI tools
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$CLI_ADD" ]; then
-    s_question_yn "Do you want to install additional CLI tools?" ANSWER_CLI_ADD Y 0 $CLI_ADD
+    s_question_yn "Do you want to install additional CLI tools?" ANSWER_CLI_ADD Y 0 "$CLI_ADD"
     case "$ANSWER_CLI_ADD" in
       [Yy])
         if command -v apt >/dev/null 2>&1; then
             # speedtest-cli
-            curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | $SUDO bash
+            curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | indent_custom "$INT_SETUP_PREFIX_CLI" 1 $SUDO bash
             # Github cli
-            (type -p wget >/dev/null || ($SUDO apt update && $SUDO apt install wget -y)) \
+            (type -p wget >/dev/null || (indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt update && indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install wget -y)) \
                 && $SUDO mkdir -p -m 755 /etc/apt/keyrings \
                 && out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
                 && cat $out | $SUDO tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
@@ -156,8 +156,8 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$CLI_ADD" ]; then
                 && $SUDO mkdir -p -m 755 /etc/apt/sources.list.d \
                 && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | $SUDO tee /etc/apt/sources.list.d/github-cli.list > /dev/null 
             
-            $SUDO apt update
-            $SUDO apt install -y $CLI_ADD
+            indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt update
+            indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install -y $CLI_ADD
         elif command -v brew >/dev/null 2>&1; then
             brew install $CLI_ADD
         elif command -v yum >/dev/null 2>&1; then
@@ -172,7 +172,8 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$CLI_ADD" ]; then
         else
             s_error "No known package manager installed"
         fi
-        ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA gh git-extras rsync"        
+        ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA gh git-extras rsync"     
+        ;;   
       *) s_echo "Skipping additional CLI tools." 2 ;;
     esac
 
@@ -202,10 +203,13 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     s_question_yn "Do you want to install Python?" ANSWER_PYTHON Y
     case "$ANSWER_PYTHON" in
       [Yy])
-        $SUDO apt install -y python3
-        python3 -m pip install --upgrade pip
-        python3 --version
-        ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA pip python" 
+        indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install -y python3-dev python3-pip python3-setuptools
+        indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 python3 -m pip install --upgrade pip
+        indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 $SUDO python3 -m pip install --upgrade pip
+        indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 python3 -m pip install thefuck
+        indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 $SUDO python3 -m pip install thefuck
+        indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 python3 --version
+        ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA pip python thefuck" 
 
         s_question_yn "Do you want to install Pyenv?" ANSWER_PYTHON_PYENV Y 1
         case "$ANSWER_PYTHON_PYENV" in
@@ -246,11 +250,12 @@ case "$ANSWER_CONDA" in
     s_question_yn "Would you like to add Mamba support?" ANSWER_MAMBA N 1
     case "$ANSWER_MAMBA" in
         [Yy])
+        . "$ANSWER_CONDA_DIR/etc/profile.d/mamba.sh"
         s_echo "Mamba support will be activated." 2
-        RUN_AFTER_DONE="$RUN_AFTER_DONE && mamba shell init"
+        RUN_AFTER_DONE="$RUN_AFTER_DONE && mamba shell init zsh"
         ;;
         [Nn])
-        s_echo "Mamba support not activated. Run 'mamba shell init' to activate later." 2
+        s_echo "Mamba support not activated. Run 'mamba shell init zsh' to activate later." 2
         ;;
     esac
     ;;
@@ -261,21 +266,21 @@ cat ./prompt.zshrc >> "${HOME}/.zshrc"
 
 # GUI apps if display available
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$DISPLAY" ]; then
-    s_question_yn "Would you like to install GUI applications?" ANSWER_GUI_INSTALL N 0 $GUI_INSTALL
+    s_question_yn "Would you like to install GUI applications?" ANSWER_GUI_INSTALL N 0 "$GUI_INSTALL"
     case "$ANSWER_GUI_INSTALL" in
       [Yy])
         if command -v apt >/dev/null 2>&1; then
             # add repos
-            $SUDO apt install -y apt-transport-https
+            indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install -y apt-transport-https
             printf "code code/add-microsoft-repo boolean true\n" | $SUDO debconf-set-selections
             curl -sS https://download.spotify.com/debian/pubkey_C85668DF69375001.gpg \
-              | $SUDO gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
+              | indent_custom "$INT_SETUP_PREFIX_GUI" 1 $SUDO gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
             printf "deb https://repository.spotify.com stable non-free\n" \
               | $SUDO tee /etc/apt/sources.list.d/spotify.list >/dev/null
-            $SUDO add-apt-repository -y ppa:nextcloud-devs/client
-            $SUDO add-apt-repository -y ppa:quentiumyt/nvtop
-            $SUDO apt update
-            $SUDO apt install -y $GUI_INSTALL
+            indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO add-apt-repository -y ppa:nextcloud-devs/client
+            indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO add-apt-repository -y ppa:quentiumyt/nvtop
+            indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt update
+            indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install -y $GUI_INSTALL
         else
             s_error "Only APT-based GUI install is supported."
         fi
@@ -288,7 +293,7 @@ fi
 
 # 
 s_echo "Finally updating ZSH plugins."
-if [ -n "$ZSH_PLUGINS_EXTRA"]; then
+if [ -n "$ZSH_PLUGINS_EXTRA" ]; then
     ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA "
     sed -i "s|{{VARIABLE_ZSH_PLUGINS_EXTRA}}|$ZSH_PLUGINS_EXTRA|g" "${HOME}/.zshrc"
 else
@@ -297,4 +302,5 @@ fi
 
 # Hand off to zsh
 # printf '%s\n' "$RUN_AFTER_DONE"
+RUN_AFTER_DONE="$RUN_AFTER_DONE && exec zsh -i"
 exec zsh -f -c "$RUN_AFTER_DONE"

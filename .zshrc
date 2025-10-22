@@ -49,7 +49,7 @@ HIST_STAMPS="mm/dd/yyyy"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=({{VARIABLE_ZSH_PLUGINS_EXTRA}}git colorize ssh cp tmux extract history thefuck jump command-not-found copypath copyfile isodate zsh-navigation-tools)
+plugins=({{VARIABLE_ZSH_PLUGINS_EXTRA}}git colorize cp tmux extract history jump command-not-found copypath copyfile isodate zsh-navigation-tools)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -132,3 +132,4 @@ precmd_functions+=( prompt_virtualenv )
 
 # change hostname in PROMPT  so I know which shell I am in
 CUSTOMSERVERNAME={{VARIABLE_CUSTOMSERVERNAME}}
+
