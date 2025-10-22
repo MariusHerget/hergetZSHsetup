@@ -24,10 +24,10 @@ ZSH_THEME="xxf"
 # DISABLE_LS_COLORS="true"
 
 # Uncomment the following line to disable auto-setting terminal title.
- DISABLE_AUTO_TITLE="true"
+DISABLE_AUTO_TITLE="true"
 
 # Uncomment the following line to enable command auto-correction.
- ENABLE_CORRECTION="true"
+ENABLE_CORRECTION="true"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
 # COMPLETION_WAITING_DOTS="true"
@@ -35,12 +35,12 @@ ZSH_THEME="xxf"
 # Uncomment the following line if you want to disable marking untracked files
 # under VCS as dirty. This makes repository status check for large repositories
 # much, much faster.
- DISABLE_UNTRACKED_FILES_DIRTY="true"
+DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 # Uncomment the following line if you want to change the command execution time
 # stamp shown in the history command output.
 # The optional three formats: "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
- HIST_STAMPS="mm/dd/yyyy"
+HIST_STAMPS="mm/dd/yyyy"
 
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
@@ -49,9 +49,18 @@ ZSH_THEME="xxf"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git colorize cp extract history jump)
+plugins=({{VARIABLE_ZSH_PLUGINS_EXTRA}}git colorize ssh cp tmux extract history thefuck jump command-not-found copypath copyfile isodate zsh-navigation-tools)
 
 source $ZSH/oh-my-zsh.sh
+
+autoload znt-history-widget
+zle -N znt-history-widget
+bindkey "^R" znt-history-widget
+zle -N znt-cd-widget
+bindkey "^B" znt-cd-widget
+zle -N znt-kill-widget
+bindkey "^Y" znt-kill-widget
+
 
 alias lss='ls -lsa'
 alias aptu='sudo apt-get update && sudo apt-get upgrade'
@@ -60,6 +69,17 @@ alias aptr='sudo apt-get remove '
 alias apta='sudo apt-get autoremove'
 alias aptp='sudo apt-get purge'
 alias dc='docker compose'
+alias ip_public='wget http://ipinfo.io/ip -qO -'
+
+# Nice file sizes
+function filesizes {
+    du -sh --time -- ${1="."}/* | sort -h
+}
+
+# Custom search / find alias for global search
+findg() {
+    sudo find / -name "$1"
+}
 
 prompt_segment() {
   local bg fg
@@ -108,9 +128,7 @@ prompt_virtualenv() {
    print -Pn $out
   fi
 }
-
 precmd_functions+=( prompt_virtualenv )
-
 
 # change hostname in PROMPT  so I know which shell I am in
 CUSTOMSERVERNAME={{VARIABLE_CUSTOMSERVERNAME}}

@@ -5,7 +5,7 @@
 ###########################
 # GUI and additional package lists
 GUI_INSTALL="code spotify-client nextcloud-desktop nvtop ntfs-3g fonts-firacode ttf-mscorefonts-installer firefox chromium-browser"
-CLI_ADD="build-essential make cmake git 7zip zip gcc g++ e2fsprogs speedtest"
+CLI_ADD="build-essential make cmake git git-extras gh 7zip zip gcc g++ e2fsprogs speedtest nmap rsync"
 
 ###########
 ## SETUP ##
@@ -15,6 +15,7 @@ CLI_ADD="build-essential make cmake git 7zip zip gcc g++ e2fsprogs speedtest"
 
 # Variables
 RUN_AFTER_DONE="echo '$INT_SETUP_PREFIX  Running additional setup stuff'"
+ZSH_PLUGINS_EXTRA=""
 
 # Ask for machine name
 s_question "What should this machine be named?" MACHINE_NAME
@@ -144,19 +145,34 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$CLI_ADD" ]; then
     case "$ANSWER_CLI_ADD" in
       [Yy])
         if command -v apt >/dev/null 2>&1; then
+            # speedtest-cli
             curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | $SUDO bash
+            # Github cli
+            (type -p wget >/dev/null || ($SUDO apt update && $SUDO apt install wget -y)) \
+                && $SUDO mkdir -p -m 755 /etc/apt/keyrings \
+                && out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+                && cat $out | $SUDO tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+                && $SUDO chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+                && $SUDO mkdir -p -m 755 /etc/apt/sources.list.d \
+                && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | $SUDO tee /etc/apt/sources.list.d/github-cli.list > /dev/null 
+            
             $SUDO apt update
             $SUDO apt install -y $CLI_ADD
         elif command -v brew >/dev/null 2>&1; then
             brew install $CLI_ADD
         elif command -v yum >/dev/null 2>&1; then
             curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.rpm.sh | $SUDO bash
+            type -p yum-config-manager >/dev/null || $SUDO yum install yum-utils
+            $SUDO yum-config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
             $SUDO yum install -y $CLI_ADD
         elif command -v zypper >/dev/null 2>&1; then
+            $SUDO zypper addrepo https://cli.github.com/packages/rpm/gh-cli.repo
+            $SUDO zypper ref
             $SUDO zypper install -y $CLI_ADD
         else
             s_error "No known package manager installed"
         fi
+        ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA gh git-extras rsync"        
       *) s_echo "Skipping additional CLI tools." 2 ;;
     esac
 
@@ -175,6 +191,7 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$CLI_ADD" ]; then
         if getent group docker >/dev/null 2>&1; then :; else indent_custom "$INT_SETUP_PREFIX_DOCKER" 2  $SUDO groupadd docker; fi
         $SUDO usermod -aG docker "$USER"
         s_echo "Log out and back in to use docker without sudo." 2
+        ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA docker docker-compose"
         ;;
       *) s_echo "Skipping Docker." 2 ;;
     esac
@@ -188,6 +205,7 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
         $SUDO apt install -y python3
         python3 -m pip install --upgrade pip
         python3 --version
+        ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA pip python" 
 
         s_question_yn "Do you want to install Pyenv?" ANSWER_PYTHON_PYENV Y 1
         case "$ANSWER_PYTHON_PYENV" in
@@ -199,6 +217,7 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
             indent_custom "$INT_SETUP_PREFIX_PYENV" 3 python3 -m pip install --user virtualenv
             indent_custom "$INT_SETUP_PREFIX_PYENV" 3 python3 -m pip install virtualenv
             cat ./pyenv.zshrc >> "${HOME}/.zshrc"
+            ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA pyenv"
             ;;
         esac
         ;;
@@ -265,6 +284,15 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$DISPLAY" ]; then
     esac
 else
     s_echo "GUI not available or no sudo. Skipping installing GUI apps."
+fi
+
+# 
+s_echo "Finally updating ZSH plugins."
+if [ -n "$ZSH_PLUGINS_EXTRA"]; then
+    ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA "
+    sed -i "s|{{VARIABLE_ZSH_PLUGINS_EXTRA}}|$ZSH_PLUGINS_EXTRA|g" "${HOME}/.zshrc"
+else
+    sed -i "s|{{VARIABLE_ZSH_PLUGINS_EXTRA}}||g" "${HOME}/.zshrc"
 fi
 
 # Hand off to zsh
