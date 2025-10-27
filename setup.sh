@@ -5,7 +5,7 @@
 ###########################
 # GUI and additional package lists
 GUI_INSTALL="code spotify-client nextcloud-desktop nvtop ntfs-3g fonts-firacode ttf-mscorefonts-installer firefox chromium-browser"
-CLI_ADD="build-essential make cmake git git-extras gh 7zip zip gcc g++ e2fsprogs speedtest nmap rsync"
+CLI_ADD="build-essential make cmake git git-extras gh 7zip zip gcc g++ e2fsprogs nmap rsync"
 
 ###########
 ## SETUP ##
@@ -146,7 +146,7 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$CLI_ADD" ]; then
       [Yy])
         if command -v apt >/dev/null 2>&1; then
             # speedtest-cli
-            curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | indent_custom "$INT_SETUP_PREFIX_CLI" 1 $SUDO bash
+            #curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | indent_custom "$INT_SETUP_PREFIX_CLI" 1 $SUDO bash
             # Github cli
             (type -p wget >/dev/null || (indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt update && indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install wget -y)) \
                 && $SUDO mkdir -p -m 755 /etc/apt/keyrings \
