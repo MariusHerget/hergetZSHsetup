@@ -178,24 +178,29 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$CLI_ADD" ]; then
     esac
 
     # Docker installer
-    s_question_yn "Do you want to install docker?" ANSWER_DOCKER N
-    case "$ANSWER_DOCKER" in
-      [Yy])
-        s_echo "Downloading docker installer..." 1
-        curl -L --progress-bar -o docker.sh "https://get.docker.com"
-        indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 sh docker.sh
-        rm docker.sh
-        # indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 $SUDO groupadd docker 2>/dev/null
-        # indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 $SUDO usermod -aG docker "$USER"
-        # indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 newgrp docker
-        # Docker group handling
-        if getent group docker >/dev/null 2>&1; then :; else indent_custom "$INT_SETUP_PREFIX_DOCKER" 2  $SUDO groupadd docker; fi
-        $SUDO usermod -aG docker "$USER"
-        s_echo "Log out and back in to use docker without sudo." 2
+    if ! command -v docker >/dev/null 2>&1; then
+        s_question_yn "Do you want to install docker?" ANSWER_DOCKER N
+        case "$ANSWER_DOCKER" in
+          [Yy])
+            s_echo "Downloading docker installer..." 1
+            curl -L --progress-bar -o docker.sh "https://get.docker.com"
+            indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 sh docker.sh
+            rm docker.sh
+            # indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 $SUDO groupadd docker 2>/dev/null
+            # indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 $SUDO usermod -aG docker "$USER"
+            # indent_custom "$INT_SETUP_PREFIX_DOCKER" 2 newgrp docker
+            # Docker group handling
+            if getent group docker >/dev/null 2>&1; then :; else indent_custom "$INT_SETUP_PREFIX_DOCKER" 2  $SUDO groupadd docker; fi
+            $SUDO usermod -aG docker "$USER"
+            s_echo "Log out and back in to use docker without sudo." 2
+            ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA docker docker-compose"
+            ;;
+          *) s_echo "Skipping Docker." 2 ;;
+        esac
+    else
         ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA docker docker-compose"
-        ;;
-      *) s_echo "Skipping Docker." 2 ;;
-    esac
+    fi
+
 fi
 
 # Python & Pyenv
