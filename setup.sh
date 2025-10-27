@@ -208,11 +208,9 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     s_question_yn "Do you want to install Python?" ANSWER_PYTHON Y
     case "$ANSWER_PYTHON" in
       [Yy])
-        indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install -y python3-dev python3-pip python3-setuptools
+        indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install -y python3-dev python3-pip python3-setuptools pipx thefuck
         indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 python3 -m pip install --upgrade pip
         indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 $SUDO python3 -m pip install --upgrade pip
-        indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 python3 -m pip install thefuck
-        indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 $SUDO python3 -m pip install thefuck
         indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 python3 --version
         ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA pip python thefuck" 
 
