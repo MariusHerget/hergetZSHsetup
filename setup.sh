@@ -214,7 +214,7 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
         indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 python3 --version
         ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA pip python thefuck" 
 
-        s_question_yn "Do you want to install Pyenv?" ANSWER_PYTHON_PYENV Y 1
+        s_question_yn "Do you want to install Pyenv?" ANSWER_PYTHON_PYENV N 1
         case "$ANSWER_PYTHON_PYENV" in
           [Yy])
             s_echo "Downloading pyenv installer..." 2
