@@ -39,7 +39,7 @@ fi
 # If sudo/root available, prepare core install list
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     # Required tools
-    INSTALL_PKGS="zsh curl passwd trash-cli apt-transport-https ca-certificates wget software-properties-common vim htop btop tmux"
+    INSTALL_PKGS="zsh curl passwd trash-cli apt-transport-https ca-certificates wget software-properties-common vim htop btop tmux thefuck"
     s_echo "Installing required and recommended packages"
     s_echo "($INSTALL_PKGS)" 1
 
