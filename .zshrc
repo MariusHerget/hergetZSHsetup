@@ -61,6 +61,7 @@ bindkey "^B" znt-cd-widget
 zle -N znt-kill-widget
 bindkey "^Y" znt-kill-widget
 
+source ~/.zsh_history_search
 
 alias lss='ls -lsa'
 alias aptu='sudo apt-get update && sudo apt-get upgrade'

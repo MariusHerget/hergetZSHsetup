@@ -1,0 +1,115 @@
+# ~/.zsh_history_search
+
+RED=$'\033[1;31m'
+BLUE=$'\033[1;34m'
+RESET=$'\033[0m'
+
+_ts_to_date() {
+    date -d "@$1" +"%d.%m.%y %H:%M:%S"
+}
+
+find_history() {
+    local show_all=false
+    local raw_output=false
+    local pattern=""
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -a|--all) show_all=true; shift ;;
+            --raw|--copy) raw_output=true; shift ;;
+            *) pattern="$1"; shift ;;
+        esac
+    done
+
+    [[ -z $pattern ]] && echo "Usage: find_history <pattern> [-a|--all] [--raw|--copy]" && return 1
+
+    local regex=$(echo "$pattern" | sed 's/\*/.*/g; s/\?/.?/g')
+
+    perl -Mstrict -Mwarnings -e '
+        use POSIX qw(strftime);
+        my %latest;
+        my $show_all = shift;
+        my $regex = shift;
+        my $red = shift;
+        my $blue = shift;
+        my $reset = shift;
+        my $raw_output = shift;
+
+        local $/ = undef;
+        open my $fh, "<", "$ENV{HOME}/.zsh_history" or die $!;
+        my $content = <$fh>;
+        close $fh;
+
+        my @entries = split(/\n(?=: [0-9]+:[0-9]+;)/, $content);
+
+        foreach my $entry (@entries) {
+            if ($entry =~ /^: (\d+):\d+;(.*)/s) {
+                my ($ts, $cmd) = ($1, $2);
+
+                # Collapse multi-line commands ending with backslash
+                $cmd =~ s/\\\s*\n/\\/g;
+
+                # Normalize whitespace for uniqueness and display
+                my $cmd_norm = $cmd;
+                $cmd_norm =~ s/[ \t]+/ /g;
+                $cmd_norm =~ s/^\s+|\s+$//g;  # trim leading/trailing spaces
+                my $cmd_display = $cmd_norm;
+
+                # Skip fh itself
+                next if $cmd_norm =~ /^fh\b/;
+
+                if ($cmd_norm =~ /$regex/) {
+                    if ($show_all eq "true") {
+                        my $date_str = strftime("%d.%m.%y %H:%M:%S", localtime($ts));
+                        my $cmd_copy = $cmd_display;
+                        $cmd_copy =~ s/($regex)/$red$1$reset/g;
+
+                        my @lines = split(/\\/, $cmd_copy);
+                        foreach my $i (0..$#lines) {
+                            $lines[$i] =~ s/^\s+|\s+$//g;
+                            if ($i == 0) {
+                                print "$blue$date_str$reset > $lines[$i]\n";
+                            } else {
+                                if ($raw_output eq "true") {
+                                    print "$lines[$i]\n";
+                                } else {
+                                    print " " x (length("$date_str > ")) . "$lines[$i]\n";
+                                }
+                            }
+                        }
+                    } else {
+                        # Use normalized string as key for uniqueness
+                        if (!exists $latest{$cmd_norm} || $ts > $latest{$cmd_norm}) {
+                            $latest{$cmd_norm} = $ts;
+                        }
+                    }
+                }
+            }
+        }
+
+        # Print unique commands if not showing all
+        unless ($show_all eq "true") {
+            foreach my $cmd_norm (sort { $latest{$a} <=> $latest{$b} } keys %latest) {
+                my $date_str = strftime("%d.%m.%y %H:%M:%S", localtime($latest{$cmd_norm}));
+                my $cmd_copy = $cmd_norm;
+                $cmd_copy =~ s/($regex)/$red$1$reset/g;
+
+                my @lines = split(/\\/, $cmd_copy);
+                foreach my $i (0..$#lines) {
+                    $lines[$i] =~ s/^\s+|\s+$//g;
+                    if ($i == 0) {
+                        print "$blue$date_str$reset > $lines[$i]\n";
+                    } else {
+                        if ($raw_output eq "true") {
+                            print "$lines[$i]\n";
+                        } else {
+                            print " " x (length("$date_str > ")) . "$lines[$i]\n";
+                        }
+                    }
+                }
+            }
+        }
+    ' "$show_all" "$regex" "$RED" "$BLUE" "$RESET" "$raw_output"
+}
+
+alias fh='find_history'
