@@ -64,7 +64,7 @@ bindkey "^Y" znt-kill-widget
 source ~/.zsh_history_search
 
 alias lss='ls -lsa'
-alias aptu='sudo apt-get update && sudo apt-get upgrade'
+alias aptu='sudo apt-get update && sudo apt-get full-upgrade'
 alias apti='sudo apt-get install '
 alias aptr='sudo apt-get remove '
 alias apta='sudo apt-get autoremove'
