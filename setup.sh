@@ -98,6 +98,7 @@ fi
 s_echo "Configuring personalized ZSH."
 s_echo "Copying .zshrc and .tmux.conf" 1
 cp ".zshrc" "${HOME}/.zshrc"
+cp ".zsh_history_search" "${HOME}/.zsh_history_search"
 cp ".tmux.conf" "${HOME}/.tmux.conf"
 
 # substitute machine name placeholder
