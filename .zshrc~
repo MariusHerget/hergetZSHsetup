@@ -52,9 +52,6 @@ HIST_STAMPS="mm/dd/yyyy"
 plugins=({{VARIABLE_ZSH_PLUGINS_EXTRA}}git colorize cp tmux extract history jump command-not-found copypath copyfile isodate zsh-navigation-tools)
 
 source $ZSH/oh-my-zsh.sh
-eval $(thefuck --alias)
-# You can use whatever you want as an alias, like for Mondays:
-eval $(thefuck --alias FUCK)
 
 autoload znt-history-widget
 zle -N znt-history-widget
