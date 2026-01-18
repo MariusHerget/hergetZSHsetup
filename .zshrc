@@ -68,6 +68,8 @@ source ~/.zsh_history_search
 
 alias lss='ls -lsa'
 alias aptu='sudo apt-get update && sudo apt-get full-upgrade'
+alias aptuf='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y && sudo snap refresh && flatpak update -y'
+alias aptall='aptuf'
 alias apti='sudo apt-get install '
 alias aptr='sudo apt-get remove '
 alias apta='sudo apt-get autoremove'
