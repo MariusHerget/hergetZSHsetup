@@ -1,2 +1,5 @@
 .user-conf
 test.sh
+.zshrc~
+get-pip.py
+setup.sh~
