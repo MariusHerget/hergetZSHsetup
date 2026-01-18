@@ -215,11 +215,16 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
         indent_custom "$INT_SETUP_PREFIX_PYTHON" 1 python3 --version
         ZSH_PLUGINS_EXTRA="$ZSH_PLUGINS_EXTRA pip python thefuck" 
         
+        indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install -y software-properties-common
+        indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO add-apt-repository -y ppa:deadsnakes/ppa
+        indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt update
+        indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install -y python3.11 python3.11-venv
+		
+        pipx install --python python3.11 thefuck
+        $SUDO pipx install --python python3.11 thefuck
         pipx ensurepath
-        $SUDO pipx ensurepath --global
-        pipx install thefuck --force
-        $SUDO pipx install thefuck --force
-        
+        $SUDO pipx ensurepath
+                
         s_question_yn "Do you want to install Pyenv?" ANSWER_PYTHON_PYENV N 1
         case "$ANSWER_PYTHON_PYENV" in
           [Yy])
@@ -289,7 +294,8 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$DISPLAY" ]; then
             indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO add-apt-repository -y ppa:nextcloud-devs/client
             indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO add-apt-repository -y ppa:quentiumyt/nvtop
             indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt update
-            indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt install -y $GUI_INSTALL
+            # ToDo use normal apt here for interactive stuff
+            $SUDO apt install -y $GUI_INSTALL
         else
             s_error "Only APT-based GUI install is supported."
         fi
