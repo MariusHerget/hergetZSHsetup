@@ -4,8 +4,10 @@
 ## Default Install Stuff ##
 ###########################
 # GUI and additional package lists
-GUI_INSTALL="code spotify-client nextcloud-desktop nvtop ntfs-3g fonts-firacode ttf-mscorefonts-installer firefox chromium-browser"
+GUI_INSTALL="code spotify-client nextcloud-desktop nvtop ntfs-3g fonts-firacode ttf-mscorefonts-installer firefox chromium-browser zotero signal signal-desktop"
 CLI_ADD="build-essential make cmake git git-extras gh 7zip zip gcc g++ e2fsprogs nmap rsync"
+TEX_INSTALL="texlive-full texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra"
+
 
 ###########
 ## SETUP ##
@@ -39,7 +41,7 @@ fi
 # If sudo/root available, prepare core install list
 if [ "$SUDO_PERM_AVAIL" = "TRUE" ]; then
     # Required tools
-    INSTALL_PKGS="zsh curl passwd trash-cli apt-transport-https ca-certificates wget software-properties-common vim htop btop tmux thefuck"
+    INSTALL_PKGS="zsh curl passwd trash-cli apt-transport-https ca-certificates wget software-properties-common vim htop btop tmux"
     s_echo "Installing required and recommended packages"
     s_echo "($INSTALL_PKGS)" 1
 
@@ -275,6 +277,18 @@ case "$ANSWER_CONDA" in
     ;;
 esac
 
+# TeXLive
+s_question_yn "Do you want to install TeX Live?" ANSWER_TEX N
+case "$ANSWER_TEX" in
+  [Yy])
+    $SUDO apt install -y $TEX_INSTALL
+    wget https://www.tug.org/fonts/getnonfreefonts/install-getnonfreefonts
+    $SUDO texlua install-getnonfreefonts
+    $SUDO getnonfreefonts -a --sys
+    rm install-getnonfreefonts
+    ;;
+esac
+
 # Append prompt config
 cat ./prompt.zshrc >> "${HOME}/.zshrc"
 
@@ -291,9 +305,23 @@ if [ "$SUDO_PERM_AVAIL" = "TRUE" ] && [ -n "$DISPLAY" ]; then
               | indent_custom "$INT_SETUP_PREFIX_GUI" 1 $SUDO gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
             printf "deb https://repository.spotify.com stable non-free\n" \
               | $SUDO tee /etc/apt/sources.list.d/spotify.list >/dev/null
+            # Nextcloud
             indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO add-apt-repository -y ppa:nextcloud-devs/client
+            # nvtop
             indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO add-apt-repository -y ppa:quentiumyt/nvtop
+            # Zotero
+            wget -qO- https://raw.githubusercontent.com/retorquere/zotero-deb/master/install.sh | $SUDO bash
+            # Signal
+            wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg;
+            cat signal-desktop-keyring.gpg | $SUDO tee /usr/share/keyrings/signal-desktop-keyring.gpg > /dev/null
+            wget -O signal-desktop.sources https://updates.signal.org/static/desktop/apt/signal-desktop.sources;
+            cat signal-desktop.sources | $SUDO tee /etc/apt/sources.list.d/signal-desktop.sources > /dev/null
+            rm signal-desktop-keyring.gpg signal-desktop.sources
+
+            # Update package database
             indent_custom "$INT_SETUP_PREFIX_APT" 1 $SUDO apt update
+
+
             # ToDo use normal apt here for interactive stuff
             $SUDO apt install -y $GUI_INSTALL
         else
