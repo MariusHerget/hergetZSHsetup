@@ -5,7 +5,7 @@
 ###########################
 # GUI and additional package lists
 GUI_INSTALL="code spotify-client nextcloud-desktop nvtop ntfs-3g fonts-firacode ttf-mscorefonts-installer firefox chromium-browser zotero signal signal-desktop"
-CLI_ADD="build-essential make cmake git git-extras gh 7zip zip gcc g++ e2fsprogs nmap rsync"
+CLI_ADD="build-essential make cmake git git-extras gh 7zip zip gcc g++ e2fsprogs nmap rsync pv"
 TEX_INSTALL="texlive-full texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra"
 
 

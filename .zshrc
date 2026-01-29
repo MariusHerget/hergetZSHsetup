@@ -52,8 +52,9 @@ HIST_STAMPS="mm/dd/yyyy"
 plugins=({{VARIABLE_ZSH_PLUGINS_EXTRA}}git colorize cp tmux extract history jump command-not-found copypath copyfile isodate zsh-navigation-tools)
 
 source $ZSH/oh-my-zsh.sh
-eval $(thefuck --alias)
-# You can use whatever you want as an alias, like for Mondays:
+if command -v pipx >/dev/null 2>&1; then
+  pipx ensurepath >/dev/null 2>&1
+fi
 eval $(thefuck --alias FUCK)
 
 autoload znt-history-widget
@@ -87,54 +88,35 @@ findg() {
     sudo find / -name "$1"
 }
 
-prompt_segment() {
-  local bg fg
-  [[ -n $1 ]] && bg="%K{$1}" || bg="%k"
-  [[ -n $2 ]] && fg="%F{$2}" || fg="%f"
-  if [[ $CURRENT_BG != 'NONE' && $1 != $CURRENT_BG ]]; then
-    echo -n " %{$bg%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR%{$fg%} "
-  else
-    echo -n "%{$bg%}%{$fg%} "
-  fi
-  CURRENT_BG=$1
-  [[ -n $3 ]] && echo -n $3
-}
 
 # Display current virtual environment
 prompt_virtualenv() {
-  local env='';
-  local out_env='';
-  local out_vers='';
-  
-  # if "$CONDA_DEFAULT_ENV" variable exists,
-  # then you are using conda to manage python virtual env
+  PROMPT_VENV=""
+
+  # Conda
   if [[ -n "$CONDA_DEFAULT_ENV" ]]; then
-    env="$CONDA_DEFAULT_ENV"
-    out_env="conda"
-    out_vers="$(basename $env)"
-  elif [[ -n "$VIRTUAL_ENV" ]]; then
-    env="$VIRTUAL_ENV"
-    out_env="venv"
-    out_vers="$(basename $env)"
-  elif [[ -n $PYENV_SHELL ]]; then
-    local version
-    local pyv
-    pyv=$(python -V 2>&1 | grep -Po '(?<=Python )(.+)')
-    version=${(@)$(pyenv version)[1]}
-    if [[ $version != system ]]; then
-        out_env="pyenv"
-        out_vers="$version: $pyv"
+    local env_name="${CONDA_DEFAULT_ENV:t}"
+    PROMPT_VENV="%F{yellow}[%Bconda%b ${env_name}]%f "
+    return
+  fi
+
+  # Python venv
+  if [[ -n "$VIRTUAL_ENV" ]]; then
+    local env_name="${VIRTUAL_ENV:t}"
+    PROMPT_VENV="%F{yellow}[%Bvenv%b ${env_name}]%f "
+    return
+  fi
+
+  # Pyenv (non-system only)
+  if command -v pyenv >/dev/null 2>&1; then
+    local pyenv_version
+    pyenv_version="$(pyenv version-name 2>/dev/null)"
+    if [[ -n "$pyenv_version" && "$pyenv_version" != "system" ]]; then
+      PROMPT_VENV="%F{yellow}[%Bpyenv%b ${pyenv_version}]%f "
     fi
   fi
-  local color="yellow"
-  local out='$fg[$color]%{\e[2m%}[$out_env] $out_vers%{\e[22m%}%{$reset_color%} '
-
-  if [[ -n $env ]]; then
-   color=yellow
-   print -Pn $out
-  fi
 }
-precmd_functions+=( prompt_virtualenv )
+precmd_functions+=(prompt_virtualenv)
 
 # change hostname in PROMPT  so I know which shell I am in
 CUSTOMSERVERNAME={{VARIABLE_CUSTOMSERVERNAME}}

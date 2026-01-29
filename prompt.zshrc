@@ -9,7 +9,7 @@ PROMPT="
 ${hg_info} \
 ${git_info} \
 ${git_last_commit}
-%{$fg[red]%}%* $(prompt_virtualenv)\
+%{$fg[red]%}%* ${PROMPT_VENV}\
 %{$terminfo[bold]$fg[white]%}› %{$reset_color%}"
 
 if [[ "$USER" == "root" ]]; then
@@ -33,10 +33,10 @@ PROMPT="
 ${hg_info} \
 ${git_info} \
 ${git_last_commit}
-%{$fg[red]%}%* $(prompt_virtualenv)\
+%{$fg[red]%}%* ${PROMPT_VENV}\
 %{$terminfo[bold]$fg[white]%}› %{$reset_color%}"
 
 fi
 }
-precmd_functions+=( precmd_update_prompt )
+precmd_functions+=(precmd_update_prompt)
 
